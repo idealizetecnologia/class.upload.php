@@ -30,7 +30,7 @@ Edit your composer.json file to include the following:
 ```
     {
        "require": {
-           "verot/class.upload.php": "dev-master"
+           "idealizetecnologia/class.upload.php": "dev-master"
        }
     }
 ```
