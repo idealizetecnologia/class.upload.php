@@ -30,8 +30,16 @@ Edit your composer.json file to include the following:
 ```
     {
        "require": {
-           "verot/class.upload.php": "dev-master"
+           "verot/uploader": "^1.0"
        }
+       ...
+       "repositories": [
+            {
+                "type": "git",
+                "url": "https://github.com/tnqsoft/class.upload.php.git"
+            }
+            ...
+        ],
     }
 ```
 
@@ -52,19 +60,30 @@ Create a simple HTML file, with a form such as:
 ```
 Create a file called upload.php (into which you have first loaded the class):
 ```php
-$handle = new upload($_FILES['image_field']);
+use Verot\Uploader\Upload;
+use Verot\Uploader\Exception\FileSizeInvalidException;
+use Verot\Uploader\Exception\FileExtInvalidException;
+...
+$handle = new Upload($_FILES['image_field']);
 if ($handle->uploaded) {
-  $handle->file_new_name_body   = 'image_resized';
-  $handle->image_resize         = true;
-  $handle->image_x              = 100;
-  $handle->image_ratio_y        = true;
-  $handle->process('/home/user/files/');
-  if ($handle->processed) {
-    echo 'image resized';
-    $handle->clean();
-  } else {
-    echo 'error : ' . $handle->error;
-  }
+    $handle->file_new_name_body   = 'image_resized';
+    $handle->image_resize         = true;
+    $handle->image_x              = 100;
+    $handle->image_ratio_y        = true;
+
+    try {
+        $handle->process('/home/user/files/');
+        echo 'image resized';
+        $handle->clean();
+    } catch (\Exception $e) {
+        // TODO: Catch exception when upload file
+        if ($e instanceof FileSizeInvalidException) {
+            // TODO: Error file size invalid
+        } elseif ($e instanceof FileExtInvalidException) {
+            // TODO: Error file extension invalid
+        }
+        // TODO: Error upload process
+    }
 }
 ```
 
@@ -90,7 +109,7 @@ Don't forget to add `enctype="multipart/form-data"` in your form tag `<form>` if
 Instantiate the class with the local filename, as following:
 
 ```php
-$handle = new upload('/home/user/myfile.jpg');
+$handle = new Upload('/home/user/myfile.jpg');
 ```
 
 
@@ -99,13 +118,13 @@ $handle = new upload('/home/user/myfile.jpg');
 Instantiate the class with the special _php:_ keyword, as following:
 
 ```php
-$handle = new upload('php:'.$_SERVER['HTTP_X_FILE_NAME']);
+$handle = new Upload('php:'.$_SERVER['HTTP_X_FILE_NAME']);
 ```
 
 Prefixing the argument with _php:_ tells the class to retrieve the uploaded data in _php://input_, and the rest is the stream's filename, which is generally in `$_SERVER['HTTP_X_FILE_NAME']`. But you can use any other name you see fit:
 
 ```php
-$handle = new upload('php:mycustomname.ext');
+$handle = new Upload('php:mycustomname.ext');
 ```
 
 ### How to process raw file data?
@@ -113,13 +132,13 @@ $handle = new upload('php:mycustomname.ext');
 Instantiate the class with the special _data:_ keyword, as following:
 
 ```php
-$handle = new upload('data:'.$file_contents);
+$handle = new Upload('data:'.$file_contents);
 ```
 
 If your data is base64-encoded, the class provides a simple _base64:_ keyword, which will decode your data prior to using it:
 
 ```php
-$handle = new upload('base64:'.$base64_file_contents);
+$handle = new Upload('base64:'.$base64_file_contents);
 ```
 
 ### How to set the language?
@@ -127,8 +146,8 @@ $handle = new upload('base64:'.$base64_file_contents);
 Instantiate the class with a second argument being the language code:
 
 ```php
-$handle = new upload($_FILES['image_field'], 'fr_FR');
-$handle = new upload('/home/user/myfile.jpg', 'fr_FR');
+$handle = new Upload($_FILES['image_field'], 'fr_FR');
+$handle = new Upload('/home/user/myfile.jpg', 'fr_FR');
 ```
 
 ### How to output the resulting file or picture directly to the browser?
@@ -136,19 +155,19 @@ $handle = new upload('/home/user/myfile.jpg', 'fr_FR');
 Simply call `process()` without an argument (or with null as first argument):
 
 ```php
-$handle = new upload($_FILES['image_field']);
+$handle = new Upload($_FILES['image_field']);
 header('Content-type: ' . $handle->file_src_mime);
-echo $handle->Process();
+echo $handle->process();
 die();
 ```
 
 Or if you want to force the download of the file:
 
 ```php
-$handle = new upload($_FILES['image_field']);
+$handle = new Upload($_FILES['image_field']);
 header('Content-type: ' . $handle->file_src_mime);
 header("Content-Disposition: attachment; filename=".rawurlencode($handle->file_src_name).";");
-echo $handle->Process();
+echo $handle->process();
 die();
 ```
 
@@ -667,6 +686,11 @@ The class requires PHP 4.3+, and is compatible with PHP 5 and PHP 7
 
 * better file name sanitization
 
+**v 1.0.0** 27/08/2018
+* Rename of upload class
+* Add namespace Verot\Uploader
+* Change composer.json and autoload by psr-4
+* Add exception handle by error type. Example Size, Extension invalid
 
 **v 0.34** 11/03/2018
 
