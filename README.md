@@ -686,7 +686,7 @@ The class requires PHP 4.3+, and is compatible with PHP 5 and PHP 7
 
 * better file name sanitization
 
-**v 1.0.0** 27/08/2018
+**v 1.0.2** 27/08/2018
 * Rename of upload class
 * Add namespace Verot\Uploader
 * Change composer.json and autoload by psr-4
