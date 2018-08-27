@@ -1,23 +1,31 @@
 {
-    "name": "verot/class.upload.php",
+    "name": "verot/uploader",
     "description": "This PHP class uploads files and manipulates images very easily.",
     "type": "library",
     "homepage":"http://www.verot.net/php_class_upload.htm",
     "keywords": ["upload", "gd"],
     "license": "GPL-2.0-only",
+    "version": "1.0.0",
     "authors": [
         {
             "name": "Colin Verot",
             "email": "colin@verot.net"
+        },
+        {
+            "name": "Nguyen Nhu Tuan",
+            "email": "tnguyennhu@pentalog.com",
+            "role": "Modifer"
         }
     ],
     "support":{
-        "email":"colin@verot.net"
+        "email":"tnguyennhu@pentalog.com"
     },
     "require": {
         "php": ">=4"
     },
     "autoload": {
-        "classmap": ["src/class.upload.php"]
+        "psr-4": {
+            "Verot\\Uploader\\": "src/"
+        }
     }
 }
