@@ -1,4 +1,5 @@
 <?php
+
 // +------------------------------------------------------------------------+
 // | class.upload.php                                                       |
 // +------------------------------------------------------------------------+
@@ -25,6 +26,12 @@
 // | This script is free to use, don't abuse.                               |
 // +------------------------------------------------------------------------+
 
+namespace Verot\Uploader;
+
+use Verot\Uploader\Exception\UploadException;
+use Verot\Uploader\Exception\FileInvalidException;
+use Verot\Uploader\Exception\FileSizeInvalidException;
+use Verot\Uploader\Exception\FileExtInvalidException;
 
 /**
  * Class upload
@@ -32,8 +39,9 @@
  * @author    Colin Verot <colin@verot.net>
  * @license   http://opensource.org/licenses/gpl-license.php GNU Public License
  * @copyright Colin Verot
+ * @modifier  Nguyen Nhu Tuan <tnguyennhu@pentalog.com>
  */
-class upload {
+class Upload {
 
 
     /**
@@ -2185,7 +2193,8 @@ class upload {
 
         if (!$file) {
             $this->uploaded = false;
-            $this->error = $this->translate('file_error');
+            // $this->error = $this->translate('file_error');
+            throw new UploadException($this->translate('file_error'));
         }
 
         // check if we sent a local filename or a PHP stream rather than a $_FILE element
@@ -2268,12 +2277,14 @@ class upload {
 
                     if ($this->uploaded && !file_exists($file)) {
                         $this->uploaded = false;
-                        $this->error = $this->translate('local_file_missing');
+                        // $this->error = $this->translate('local_file_missing');
+                        throw new UploadException($this->translate('local_file_missing'));
                     }
 
                     if ($this->uploaded && !is_readable($file)) {
                         $this->uploaded = false;
-                        $this->error = $this->translate('local_file_not_readable');
+                        // $this->error = $this->translate('local_file_not_readable');
+                        throw new UploadException($this->translate('local_file_not_readable'));
                     }
 
                     if ($this->uploaded) {
@@ -2305,35 +2316,43 @@ class upload {
                         break;
                     case UPLOAD_ERR_INI_SIZE:
                         $this->uploaded = false;
-                        $this->error = $this->translate('uploaded_too_big_ini');
+                        // $this->error = $this->translate('uploaded_too_big_ini');
+                        throw new FileSizeInvalidException($this->translate('uploaded_too_big_ini'));
                         break;
                     case UPLOAD_ERR_FORM_SIZE:
                         $this->uploaded = false;
-                        $this->error = $this->translate('uploaded_too_big_html');
+                        // $this->error = $this->translate('uploaded_too_big_html');
+                        throw new FileSizeInvalidException($this->translate('uploaded_too_big_html'));
                         break;
                     case UPLOAD_ERR_PARTIAL:
                         $this->uploaded = false;
-                        $this->error = $this->translate('uploaded_partial');
+                        // $this->error = $this->translate('uploaded_partial');
+                        throw new UploadException($this->translate('uploaded_partial'));
                         break;
                     case UPLOAD_ERR_NO_FILE:
                         $this->uploaded = false;
-                        $this->error = $this->translate('uploaded_missing');
+                        // $this->error = $this->translate('uploaded_missing');
+                        throw new UploadException($this->translate('uploaded_missing'));
                         break;
                     case @UPLOAD_ERR_NO_TMP_DIR:
                         $this->uploaded = false;
-                        $this->error = $this->translate('uploaded_no_tmp_dir');
+                        // $this->error = $this->translate('uploaded_no_tmp_dir');
+                        throw new UploadException($this->translate('uploaded_no_tmp_dir'));
                         break;
                     case @UPLOAD_ERR_CANT_WRITE:
                         $this->uploaded = false;
-                        $this->error = $this->translate('uploaded_cant_write');
+                        // $this->error = $this->translate('uploaded_cant_write');
+                        throw new UploadException($this->translate('uploaded_cant_write'));
                         break;
                     case @UPLOAD_ERR_EXTENSION:
                         $this->uploaded = false;
-                        $this->error = $this->translate('uploaded_err_extension');
+                        // $this->error = $this->translate('uploaded_err_extension');
+                        throw new FileExtInvalidException($this->translate('uploaded_err_extension'));
                         break;
                     default:
                         $this->uploaded = false;
-                        $this->error = $this->translate('uploaded_unknown') . ' ('.$this->file_src_error.')';
+                        // $this->error = $this->translate('uploaded_unknown') . ' ('.$this->file_src_error.')';
+                        throw new UploadException($this->translate('uploaded_unknown') . ' ('.$this->file_src_error.')');
                 }
             }
 
@@ -2342,7 +2361,8 @@ class upload {
                 $this->file_src_name       = $file['name'];
                 if ($this->file_src_name == '') {
                     $this->uploaded = false;
-                    $this->error = $this->translate('try_again');
+                    // $this->error = $this->translate('try_again');
+                    throw new UploadException($this->translate('try_again'));
                 }
             }
 
@@ -3006,7 +3026,8 @@ class upload {
         $file_src_name_ext = $this->file_src_name_ext;
 
         if (!$this->uploaded) {
-            $this->error = $this->translate('file_not_uploaded');
+            // $this->error = $this->translate('file_not_uploaded');
+            throw new UploadException($this->translate('file_not_uploaded'));
             $this->processed = false;
         }
 
@@ -3028,7 +3049,8 @@ class upload {
             // checks file max size
             if ($this->file_src_size > $this->file_max_size) {
                 $this->processed = false;
-                $this->error = $this->translate('file_too_big') . ' : ' . $this->file_src_size . ' > ' . $this->file_max_size;
+                // $this->error = $this->translate('file_too_big') . ' : ' . $this->file_src_size . ' > ' . $this->file_max_size;
+                throw new FileSizeInvalidException($this->translate('file_too_big') . ' : ' . $this->file_src_size . ' > ' . $this->file_max_size);
             } else {
                 $this->log .= '- file size OK<br />';
             }
@@ -3061,7 +3083,8 @@ class upload {
 
             if ($this->mime_check && empty($this->file_src_mime)) {
                 $this->processed = false;
-                $this->error = $this->translate('no_mime');
+                // $this->error = $this->translate('no_mime');
+                throw new FileExtInvalidException($this->translate('no_mime'));
             } else if ($this->mime_check && !empty($this->file_src_mime) && strpos($this->file_src_mime, '/') !== false) {
                 list($m1, $m2) = explode('/', $this->file_src_mime);
                 $allowed = false;
@@ -3085,7 +3108,8 @@ class upload {
                 }
                 if (!$allowed) {
                     $this->processed = false;
-                    $this->error = $this->translate('incorrect_file');
+                    // $this->error = $this->translate('incorrect_file');
+                    throw new FileExtInvalidException($this->translate('incorrect_file'));
                 } else {
                     $this->log .= '- file mime OK : ' . $this->file_src_mime . '<br />';
                 }
@@ -3100,35 +3124,43 @@ class upload {
                     $ratio = $this->image_src_x / $this->image_src_y;
                     if (!is_null($this->image_max_width) && $this->image_src_x > $this->image_max_width) {
                         $this->processed = false;
-                        $this->error = $this->translate('image_too_wide');
+                        // $this->error = $this->translate('image_too_wide');
+                        throw new UploadException($this->translate('image_too_wide'));
                     }
                     if (!is_null($this->image_min_width) && $this->image_src_x < $this->image_min_width) {
                         $this->processed = false;
-                        $this->error = $this->translate('image_too_narrow');
+                        // $this->error = $this->translate('image_too_narrow');
+                        throw new UploadException($this->translate('image_too_narrow'));
                     }
                     if (!is_null($this->image_max_height) && $this->image_src_y > $this->image_max_height) {
                         $this->processed = false;
-                        $this->error = $this->translate('image_too_high');
+                        // $this->error = $this->translate('image_too_high');
+                        throw new UploadException($this->translate('image_too_high'));
                     }
                     if (!is_null($this->image_min_height) && $this->image_src_y < $this->image_min_height) {
                         $this->processed = false;
-                        $this->error = $this->translate('image_too_short');
+                        // $this->error = $this->translate('image_too_short');
+                        throw new UploadException($this->translate('image_too_short'));
                     }
                     if (!is_null($this->image_max_ratio) && $ratio > $this->image_max_ratio) {
                         $this->processed = false;
-                        $this->error = $this->translate('ratio_too_high');
+                        // $this->error = $this->translate('ratio_too_high');
+                        throw new UploadException($this->translate('ratio_too_high'));
                     }
                     if (!is_null($this->image_min_ratio) && $ratio < $this->image_min_ratio) {
                         $this->processed = false;
-                        $this->error = $this->translate('ratio_too_low');
+                        // $this->error = $this->translate('ratio_too_low');
+                        throw new UploadException($this->translate('ratio_too_low'));
                     }
                     if (!is_null($this->image_max_pixels) && $this->image_src_pixels > $this->image_max_pixels) {
                         $this->processed = false;
-                        $this->error = $this->translate('too_many_pixels');
+                        // $this->error = $this->translate('too_many_pixels');
+                        throw new UploadException($this->translate('too_many_pixels'));
                     }
                     if (!is_null($this->image_min_pixels) && $this->image_src_pixels < $this->image_min_pixels) {
                         $this->processed = false;
-                        $this->error = $this->translate('not_enough_pixels');
+                        // $this->error = $this->translate('not_enough_pixels');
+                        throw new UploadException($this->translate('not_enough_pixels'));
                     }
                 } else {
                     $this->log .= '- no image properties available, can\'t enforce dimension checks : ' . $this->file_src_mime . '<br />';
@@ -3217,7 +3249,8 @@ class upload {
                 } else {
                     if (@file_exists($this->file_dst_pathname)) {
                         $this->processed = false;
-                        $this->error = $this->translate('already_exists', array($this->file_dst_name));
+                        // $this->error = $this->translate('already_exists', array($this->file_dst_name));
+                        throw new UploadException($this->translate('already_exists', array($this->file_dst_name)));
                     } else {
                         $this->log .= '- ' . $this->file_dst_name . ' doesn\'t exist already<br />';
                     }
@@ -3232,19 +3265,22 @@ class upload {
                 $this->file_src_pathname   = $this->file_src_temp;
                 if (!file_exists($this->file_src_pathname)) {
                     $this->processed = false;
-                    $this->error = $this->translate('temp_file_missing');
+                    // $this->error = $this->translate('temp_file_missing');
+                    throw new UploadException($this->translate('temp_file_missing'));
                 }
             // if we haven't a temp file, and that we do check on uploads, we use is_uploaded_file()
             } else if (!$this->no_upload_check) {
                 if (!is_uploaded_file($this->file_src_pathname)) {
                     $this->processed = false;
-                    $this->error = $this->translate('source_missing');
+                    // $this->error = $this->translate('source_missing');
+                    throw new UploadException($this->translate('source_missing'));
                 }
             // otherwise, if we don't check on uploaded files (local file for instance), we use file_exists()
             } else {
                 if (!file_exists($this->file_src_pathname)) {
                     $this->processed = false;
-                    $this->error = $this->translate('source_missing');
+                    // $this->error = $this->translate('source_missing');
+                    throw new UploadException($this->translate('source_missing'));
                 }
             }
 
@@ -3256,18 +3292,21 @@ class upload {
                         if (!$this->rmkdir($this->file_dst_path, $this->dir_chmod)) {
                             $this->log .= ' failed<br />';
                             $this->processed = false;
-                            $this->error = $this->translate('destination_dir');
+                            // $this->error = $this->translate('destination_dir');
+                            throw new UploadException($this->translate('destination_dir'));
                         } else {
                             $this->log .= ' success<br />';
                         }
                     } else {
-                        $this->error = $this->translate('destination_dir_missing');
+                        // $this->error = $this->translate('destination_dir_missing');
+                        throw new UploadException($this->translate('destination_dir_missing'));
                     }
                 }
 
                 if ($this->processed && !is_dir($this->file_dst_path)) {
                     $this->processed = false;
-                    $this->error = $this->translate('destination_path_not_dir');
+                    // $this->error = $this->translate('destination_path_not_dir');
+                    throw new UploadException($this->translate('destination_path_not_dir'));
                 }
 
                 // checks if the destination directory is writeable, and attempt to make it writeable
@@ -3278,19 +3317,22 @@ class upload {
                         if (!@chmod($this->file_dst_path, $this->dir_chmod)) {
                             $this->log .= ' failed<br />';
                             $this->processed = false;
-                            $this->error = $this->translate('destination_dir_write');
+                            // $this->error = $this->translate('destination_dir_write');
+                            throw new UploadException($this->translate('destination_dir_write'));
                         } else {
                             $this->log .= ' success<br />';
                             if (!($f = @fopen($this->file_dst_path . $hash . (!empty($this->file_dst_name_ext) ? '.' . $this->file_dst_name_ext : ''), 'a+'))) { // we re-check
                                 $this->processed = false;
-                                $this->error = $this->translate('destination_dir_write');
+                                // $this->error = $this->translate('destination_dir_write');
+                                throw new UploadException($this->translate('destination_dir_write'));
                             } else {
                                 @fclose($f);
                             }
                         }
                     } else {
                         $this->processed = false;
-                        $this->error = $this->translate('destination_path_write');
+                        // $this->error = $this->translate('destination_path_write');
+                        throw new UploadException($this->translate('destination_path_write'));
                     }
                 } else {
                     if ($this->processed) @fclose($f);
@@ -3312,7 +3354,8 @@ class upload {
                     } else {
                         $this->log .= ' failed<br />';
                         $this->processed = false;
-                        $this->error = $this->translate('temp_file');
+                        // $this->error = $this->translate('temp_file');
+                        throw new UploadException($this->translate('temp_file'));
                     }
                 }
             }
@@ -3421,7 +3464,8 @@ class upload {
                 // checks if the source file is readable
                 if ($this->processed && !($f = @fopen($this->file_src_pathname, 'r'))) {
                     $this->processed = false;
-                    $this->error = $this->translate('source_not_readable');
+                    // $this->error = $this->translate('source_not_readable');
+                    throw new UploadException($this->translate('source_not_readable'));
                 } else {
                     @fclose($f);
                 }
@@ -3433,12 +3477,14 @@ class upload {
                         case 'jpg':
                             if (!$this->function_enabled('imagecreatefromjpeg')) {
                                 $this->processed = false;
-                                $this->error = $this->translate('no_create_support', array('JPEG'));
+                                // $this->error = $this->translate('no_create_support', array('JPEG'));
+                                throw new UploadException($this->translate('no_create_support', array('JPEG')));
                             } else {
                                 $image_src = @imagecreatefromjpeg($this->file_src_pathname);
                                 if (!$image_src) {
                                     $this->processed = false;
-                                    $this->error = $this->translate('create_error', array('JPEG'));
+                                    // $this->error = $this->translate('create_error', array('JPEG'));
+                                    throw new UploadException($this->translate('create_error', array('JPEG')));
                                 } else {
                                     $this->log .= '- source image is JPEG<br />';
                                 }
@@ -3447,12 +3493,14 @@ class upload {
                         case 'png':
                             if (!$this->function_enabled('imagecreatefrompng')) {
                                 $this->processed = false;
-                                $this->error = $this->translate('no_create_support', array('PNG'));
+                                // $this->error = $this->translate('no_create_support', array('PNG'));
+                                throw new UploadException($this->translate('no_create_support', array('PNG')));
                             } else {
                                 $image_src = @imagecreatefrompng($this->file_src_pathname);
                                 if (!$image_src) {
                                     $this->processed = false;
-                                    $this->error = $this->translate('create_error', array('PNG'));
+                                    // $this->error = $this->translate('create_error', array('PNG'));
+                                    throw new UploadException($this->translate('create_error', array('PNG')));
                                 } else {
                                     $this->log .= '- source image is PNG<br />';
                                 }
@@ -3461,12 +3509,14 @@ class upload {
                         case 'gif':
                             if (!$this->function_enabled('imagecreatefromgif')) {
                                 $this->processed = false;
-                                $this->error = $this->translate('no_create_support', array('GIF'));
+                                // $this->error = $this->translate('no_create_support', array('GIF'));
+                                throw new UploadException($this->translate('no_create_support', array('GIF')));
                             } else {
                                 $image_src = @imagecreatefromgif($this->file_src_pathname);
                                 if (!$image_src) {
                                     $this->processed = false;
-                                    $this->error = $this->translate('create_error', array('GIF'));
+                                    // $this->error = $this->translate('create_error', array('GIF'));
+                                    throw new UploadException($this->translate('create_error', array('GIF')));
                                 } else {
                                     $this->log .= '- source image is GIF<br />';
                                 }
@@ -3475,12 +3525,14 @@ class upload {
                         case 'bmp':
                             if (!method_exists($this, 'imagecreatefrombmp')) {
                                 $this->processed = false;
-                                $this->error = $this->translate('no_create_support', array('BMP'));
+                                // $this->error = $this->translate('no_create_support', array('BMP'));
+                                throw new UploadException($this->translate('no_create_support', array('BMP')));
                             } else {
                                 $image_src = @$this->imagecreatefrombmp($this->file_src_pathname);
                                 if (!$image_src) {
                                     $this->processed = false;
-                                    $this->error = $this->translate('create_error', array('BMP'));
+                                    // $this->error = $this->translate('create_error', array('BMP'));
+                                    throw new UploadException($this->translate('create_error', array('BMP')));
                                 } else {
                                     $this->log .= '- source image is BMP<br />';
                                 }
@@ -3492,7 +3544,8 @@ class upload {
                     }
                 } else {
                     $this->processed = false;
-                    $this->error = $this->translate('gd_missing');
+                    // $this->error = $this->translate('gd_missing');
+                    throw new UploadException($this->translate('gd_missing'));
                 }
 
                 if ($this->processed && $image_src) {
@@ -4807,7 +4860,8 @@ class upload {
                             }
                             if (!$result) {
                                 $this->processed = false;
-                                $this->error = $this->translate('file_create', array('JPEG'));
+                                // $this->error = $this->translate('file_create', array('JPEG'));
+                                throw new UploadException($this->translate('file_create', array('JPEG')));
                             } else {
                                 $this->log .= '&nbsp;&nbsp;&nbsp;&nbsp;JPEG image created<br />';
                             }
@@ -4833,7 +4887,8 @@ class upload {
                             }
                             if (!$result) {
                                 $this->processed = false;
-                                $this->error = $this->translate('file_create', array('PNG'));
+                                // $this->error = $this->translate('file_create', array('PNG'));
+                                throw new UploadException($this->translate('file_create', array('PNG')));
                             } else {
                                 $this->log .= '&nbsp;&nbsp;&nbsp;&nbsp;PNG image created<br />';
                             }
@@ -4849,7 +4904,8 @@ class upload {
                             }
                             if (!$result) {
                                 $this->processed = false;
-                                $this->error = $this->translate('file_create', array('GIF'));
+                                // $this->error = $this->translate('file_create', array('GIF'));
+                                throw new UploadException($this->translate('file_create', array('GIF')));
                             } else {
                                 $this->log .= '&nbsp;&nbsp;&nbsp;&nbsp;GIF image created<br />';
                             }
@@ -4865,7 +4921,8 @@ class upload {
                             }
                             if (!$result) {
                                 $this->processed = false;
-                                $this->error = $this->translate('file_create', array('BMP'));
+                                // $this->error = $this->translate('file_create', array('BMP'));
+                                throw new UploadException($this->translate('file_create', array('BMP')));
                             } else {
                                 $this->log .= '&nbsp;&nbsp;&nbsp;&nbsp;BMP image created<br />';
                             }
@@ -4873,7 +4930,8 @@ class upload {
 
                         default:
                             $this->processed = false;
-                            $this->error = $this->translate('no_conversion_type');
+                            // $this->error = $this->translate('no_conversion_type');
+                            throw new UploadException($this->translate('no_conversion_type'));
                     }
                     if ($this->processed) {
                         if (is_resource($image_src)) imagedestroy($image_src);
@@ -4890,14 +4948,16 @@ class upload {
                     // if we happen to have open_basedir restrictions, it is a temp file that we copy, not the original uploaded file
                     if (!copy($this->file_src_pathname, $this->file_dst_pathname)) {
                         $this->processed = false;
-                        $this->error = $this->translate('copy_failed');
+                        // $this->error = $this->translate('copy_failed');
+                        throw new UploadException($this->translate('copy_failed'));
                     }
                 } else {
                     // returns the file, so that its content can be received by the caller
                     $return_content = @file_get_contents($this->file_src_pathname);
                     if ($return_content === FALSE) {
                         $this->processed = false;
-                        $this->error = $this->translate('reading_failed');
+                        // $this->error = $this->translate('reading_failed');
+                        throw new UploadException($this->translate('reading_failed'));
                     }
                 }
             }
